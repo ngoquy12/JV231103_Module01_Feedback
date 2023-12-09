@@ -57,7 +57,7 @@ const renderListFeedback = () => {
     return `
       <div class="feedback-content">
         <div class="feedback-content-header">
-          <i class="fa-solid fa-pen-to-square"></i>
+          <i id="update_${feedback.feedbackId}" class="fa-solid fa-pen-to-square"></i>
           <i id="delete_${feedback.feedbackId}" class="fa-solid fa-xmark"></i>
         </div>
         <div class="feedback-content-body">
@@ -110,6 +110,72 @@ listFeedbackContent.addEventListener("click", (e) => {
   }
 });
 
+// Cập nhật feedback
+let updatingFeedback = null;
+
+listFeedbackContent.addEventListener("click", (e) => {
+  if (e.target && e.target.matches(".fa-pen-to-square")) {
+    const idUpdate = e.target.id.split("_")[1];
+    updatingFeedback = listFeedbackLocal.find(
+      (fb) => fb.feedbackId === idUpdate
+    );
+
+    if (updatingFeedback) {
+      // Gán thông tin công việc vào input và active điểm
+      feedbackInput.value = updatingFeedback.content;
+      scoreActive = updatingFeedback.score;
+
+      // Render lại danh sách điểm để active điểm
+      renderListButtonScore();
+    }
+  }
+});
+
+btnSend.addEventListener("click", (e) => {
+  if (updatingFeedback) {
+    // Cập nhật lại thông tin và điểm
+    updatingFeedback.content = feedback;
+    updatingFeedback.score = scoreActive;
+
+    // Lưu dữ liệu mới nhất lên local
+    localStorage.setItem("feedbacks", JSON.stringify(listFeedbackLocal));
+
+    // Clean giá trị trong ô input và reset updatingFeedback
+    feedbackInput.value = "";
+    updatingFeedback = null;
+
+    // Focus vào input
+    feedbackInput.focus();
+
+    // Load lại dữ liệu và tính điểm trung bình
+    renderListFeedback();
+    handleAverageRating();
+  } else {
+    // Thêm mới phản hồi nếu không phải là chức năng cập nhật
+    const newFeedback = {
+      feedbackId: uuidv4(),
+      score: scoreActive,
+      content: feedback,
+    };
+
+    listFeedbackLocal.unshift(newFeedback);
+    localStorage.setItem("feedbacks", JSON.stringify(listFeedbackLocal));
+
+    // Load lại dữ liệu và tính điểm trung bình
+    renderListFeedback();
+    handleAverageRating();
+
+    // Clean giá trị trong ô input
+    feedbackInput.value = "";
+  }
+
+  // Hiển thị số lượng review ra ngoài giao diện
+  reviewNumber.innerHTML = listFeedbackLocal.length;
+
+  // Validate dữ liệu
+  btnSend.classList.remove("btn-dark");
+});
+
 // Validate dữ liệu đầu vào
 const validateData = () => {
   feedbackInput.addEventListener("input", (e) => {
@@ -124,39 +190,6 @@ const validateData = () => {
       error.style.display = "none";
       btnSend.classList.add("btn-dark");
     }
-  });
-};
-
-// Gửi dữ liệu lên local
-const handleAddFeedback = () => {
-  btnSend.addEventListener("click", (e) => {
-    const newFeedback = {
-      feedbackId: uuidv4(),
-      score: scoreActive,
-      content: feedback,
-    };
-
-    // Push feedback mới nhất vào đầu mảng
-    // => feedback nào được thêm mới nhất sẽ được đẩy lên trên
-    listFeedbackLocal.unshift(newFeedback);
-
-    // Lưu dữ liệu mới nhất lên local
-    localStorage.setItem("feedbacks", JSON.stringify(listFeedbackLocal));
-
-    // Clean giá trị  trong ô input
-    feedbackInput.value = "";
-
-    // Focus vào input
-    feedbackInput.focus();
-
-    // Load lại dữ liệu
-    renderListFeedback();
-
-    // Hiển thị số lượng review ra ngoài giao diện
-    reviewNumber.innerHTML = listFeedbackLocal.length;
-
-    // Tính điểm trung bình
-    handleAverageRating();
   });
 };
 
