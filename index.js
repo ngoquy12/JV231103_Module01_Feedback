@@ -1,6 +1,6 @@
 //#region Lấy các phần tử ở trong DOM
 const scroses = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10];
-let scoreActive = 1;
+let scoreActive = 10;
 const btnScoreGroup = document.querySelector(".btn-score-group");
 const listFeedbackContent = document.querySelector(".list-feedback-content");
 let listFeedbackLocal = JSON.parse(localStorage.getItem("feedbacks")) || [];
@@ -9,12 +9,18 @@ const error = document.querySelector(".error");
 const btnSend = document.querySelector(".btn-send");
 const reviewNumber = document.querySelector(".review-number");
 const averageRate = document.querySelector(".average-number");
+const inputContainer = document.querySelector(".input-container");
 
 //#endregion
 
 //#region Các biến toàn cục
 let feedback = "";
 //#endregion
+
+// Khi click vào nơi bất kì trong phạm vi input thì thực hiện focus vào input nhập
+inputContainer.addEventListener("click", () => {
+  inputContainer.focus();
+});
 
 // Khi ứng dụng được chạy thì focus vào input nhập liệu
 feedbackInput.focus();
@@ -40,11 +46,12 @@ const renderListButtonScore = () => {
 const handleScoreButtonClick = () => {
   btnScoreGroup.addEventListener("click", (e) => {
     const targetButton = e.target.closest(".btn-score");
+    console.log(targetButton);
     if (targetButton) {
       const allButtons = btnScoreGroup.querySelectorAll(".btn-score");
       allButtons.forEach((button) => button.classList.remove("active"));
       targetButton.classList.add("active");
-      scoreActive = +targetButton.innerHTML;
+      scoreActive = +targetButton.dataset.score; // Cập nhật scoreActive từ data-score
     }
   });
 };
@@ -132,6 +139,8 @@ listFeedbackContent.addEventListener("click", (e) => {
 });
 
 btnSend.addEventListener("click", (e) => {
+  // Ngăn chặn sự kiện khi click vào button thì bị lan truyền ra bên ngoài làm focus vào input
+  e.stopPropagation();
   if (updatingFeedback) {
     // Cập nhật lại thông tin và điểm
     updatingFeedback.content = feedback;
@@ -180,7 +189,7 @@ btnSend.addEventListener("click", (e) => {
 const validateData = () => {
   feedbackInput.addEventListener("input", (e) => {
     // Nếu input không có giá trị
-    if (!e.target.value) {
+    if (!e.target.value.trim()) {
       // Hiển thị lỗi
       error.style.display = "block";
       // Thêm màu cho button
@@ -201,17 +210,16 @@ function handleAverageRating() {
       return a + b.score;
     }, 0);
 
-    console.log(totalScoreFeedback);
-
     // Tính điểm trung bình : DTB = tổng điểm / số lượng feedback
     const averageRating = totalScoreFeedback / listFeedbackLocal.length;
     averageRate.innerHTML = averageRating.toFixed(1);
+  } else {
+    averageRate.innerHTML = 0;
   }
 }
 
 handleAverageRating();
 renderListButtonScore();
 validateData();
-handleAddFeedback();
 // Gọi hàm xử lý khi người dùng click vào nút điểm số
 handleScoreButtonClick();
